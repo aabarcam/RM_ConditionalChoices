@@ -25,6 +25,10 @@
  * choice is disabled or hidden, depending on the tags used.
  * 
  * 
+ * If you use several operations inside one set of tags make sure to
+ * place parentheses around each different operation!<br>
+ * This is exemplified below.
+ * 
  * You may use both disable and hide conditions on the same choice.
  * 
  * Only a maximum of one disable and one hide conditions is allowed per
@@ -115,7 +119,10 @@
  * 
  * Since you may only use one set of disable or hide tags, use the OR and AND
  * operators if you need to check for several conditions.
- * Make sure to separate the different operations using parentheses.
+ * 
+ * Parentheses
+ * 
+ * Make sure to separate the different operations using parentheses!
  * 
  * Examples
  * Choices
