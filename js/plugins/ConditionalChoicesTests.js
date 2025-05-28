@@ -5,39 +5,137 @@
 
 /*:
  * @target MZ
- * @plugindesc Automatically joins adjacent [Show Choices...] commands into a single list of choices.
+ * @plugindesc Allows the user to disable or hide choices depending on custom conditions.
  * @author Pwino
- * @url https://github.com/aabarcam/RM_MoreChoices
+ * @url https://github.com/aabarcam/RM_ConditionalChoices
  *
- * @help MoreChoices
- *
- * This plugin automatically joins an unlimited amount of adjacent 
- * [Show Choices...] commands into a single list of choices we 
- * will refer to as a [More Choices] block in game.
- *
- * Use it in the following procedure.
- * Place two or more [Show Choices...] commands one right after the other, 
- * they will be automatically joined into a single [More Choices] in game.
- * Disable this behavior by placing any other command in between 
- * two [Show Choices...] commands at the same indentation level, 
- * such as an empty comment.
+ * @help ConditionalChoices
  * 
- * As for the [Show Choices...] optional parameters:
- * - Background: The behavior of the [More Choices] defaults to 
- *               that of the first [Show Choices...] command.
- * - Window Position: The behavior of the [More Choices] defaults to 
- *                    that of the first [Show Choices...] command.
- * - Default: The behavior of the [More Choices] defaults to that of the 
- *            first [Show Choices...] command, ignoring those set to None.
- *            Set all [Show Choices...] commands as None to set the
- *            [More Choices] behavior to None.
- * - Branch: The behavior of the [More Choices] defaults to that of the 
- *           first [Show Choices...] command that is set to Branch.
- *           If no commands are set to Branch, the behavior defaults to that of 
- *           the first [Show Choices...] command, ignoring those set to Disallow.
- *           Set all [Show Choices...] commands as Disallow to set the
- *           [More Choices] behavior to Disallow.
+ * This plugin allows to write custom conditions in each choice text
+ * box of the [Show Choices...] command, so that the choices appear
+ * as disabled or hidden in game.
+ * 
+ * How to use
+ * 
+ * Write your conditions for disabling a choice in its text box, between
+ * an opening tag <dis> and a closing tag </dis>.
+ * Likewise, write you conditions for disabling a choice in its text box
+ * between an opening tag <hide> and a closing tag </hide>.
+ * If the conditions inside the tags result in a 'true' value, then the
+ * choice is disabled or hidden, depending on the tags used.
+ * 
+ * 
+ * You may use both disable and hide conditions on the same choice.
+ * 
+ * Only a maximum of one disable and one hide conditions is allowed per
+ * choice. See below for the use of 'or' and 'and' operations if you need
+ * to chain several conditions together.
+ * 
+ * Values:
+ * <boolean>
+ *   true: always evaluates to true
+ *   false: always evaluates to false
+ *   Ex. <dis>true</dis>
+ *       This would disable the choice.
+ * <number>
+ *   Any number evaluates to itself, to be operated with other <number> values.
+ *   Ex. <hide>7 > 0</hide>
+ *       These two <numbers> are compared and the expression evaluates to true,
+ *       hiding the choice.
+ * 
+ * Boolean operations:
+ * !: Negates the truth value of a <boolean>.
+ *    Turns true into false and false into true.
+ *    Use: !<boolean>
+ *         not <boolean>
+ *    Ex. <dis> !true </dis>
+ *        <dis> not true </dis>
+ *    These would evaluate to false and not disable the choice.
+ * ||: 'OR' operator, compares two <boolean> values.
+ *     Evaluates into true if any of the two values compared is true.
+ *     Use: <boolean> || <boolean>
+ *     Ex. <dis>true || false</dis>
+ *     Since one of the values is true, this would evaluate to true
+ *     and disable the choice.
+ * &&: 'AND' operator, compares two <boolean> values.
+ *     Evaluates into true if both values compared are true.
+ *     Use: <boolean> && <boolean>
+ *     Ex. <dis>true && false</dis>
+ *     Since one of the values is false, this would evaluate to false
+ *     and not disable the choice.
+ * ==: Compares two <numbers> into a <boolean>.
+ *     Evaluates to true if the first number is equal to the second.
+ *     Use: <number> == <number>
+ *     Ex. <dis> 7 == 7 </dis>
+ *     This would evaluate to true and disable the choice.
+ * >: Compares two <numbers> into a <boolean>.
+ *    Evaluates to true if the first number is greater than the second.
+ *    Use: <number> > <number>
+ *    Ex. <dis> 7 > 9 </dis>
+ *    This would evaluate to false and not disable the choice.
+ * >=: compares two <numbers> into a <boolean>.
+ *     Evaluates to true if the first number is greater or equal than the second.
+ *     Use: <number> >= <number>
+ *     Ex. <dis> 7 >= 7 </dis>
+ *     This would evaluate to true and disable the choice.
+ * <: compares two <numbers> into a <boolean>.
+ *    Evaluates to true if the first number is lesser than the second.
+ *    Use: <number> < <number>
+ *    Ex. <dis> 7 < 9 </dis>
+ *    This would evaluate to true and disable the choice.
+ * <=: compares two <numbers> into a <boolean>.
+ *     Evaluates to true if the first number is lesser or equal than the second.
+ *     Use: <number> <= <number>
+ *     Ex. <dis> 7 <= 9 </dis>
+ *     This would evaluate to true and disable the choice.
+ * 
+ * Binary number operations:
+ * +: adds two <numbers> into another <number>.
+ *    Use: <number> + <number>
+ *    Ex. 5 + 6 -> 11
+ * -: substracts two <numbers> into another <number>.
+ *    Use: <number> - <number>
+ *    Ex. 5 - 2 -> 3
+ * *: multiplies two <numbers> into another <number>.
+ *    Use: <number> * <number>
+ *    Ex. 2 * 4 -> 8
+ * /: divides two <numbers> into another <number>.
+ *    Use: <number> / <number>
+ *    Ex. 1 / 5 -> 0.2
+ * 
+ * Accessing variables:
+ * You can access the value of a variable set by the [Control Variables...]
+ * command with the syntax '\v[n]', where 'n' is the variable number.
+ * Use: \v[<number>]
+ * Ex. <hide>\v[1] > 0</hide>
+ * This retrieves the value of variable 1 in your game and hides the choice
+ * if said value is greater than zero.
  *
+ * Chaining conditions
+ * 
+ * Since you may only use one set of disable or hide tags, use the OR and AND
+ * operators if you need to check for several conditions.
+ * Make sure to separate the different operations using parentheses.
+ * 
+ * Examples
+ * Choices
+ * #1: <dis> (\v[1] > 0) && (\v[1] < 100) </dis>First choice!
+ * #2: <dis> (\v[1] > 0) || (\v[2] == (\v[3] + 3) ) </dis>Second choice!
+ * #3: <dis> (\v[1] == 0) || ((\v[2] > 0) && (\v[3] > 0)) </dis><hide>\v[3] == 90</hide>Third choice!
+ * 
+ * In these examples, the first choice would be disabled if variable 1 has 
+ * a value greater than 0 and lesser than 100. The second would be disabled
+ * if variable 1 has a value greater than 0 or if variable 2 has a value
+ * equal to variable 3 plus 3. The third would be disabled if either 
+ * variable 1 is equal to 0, or if both variables 2 and 3 are greater than 0, 
+ * and it would be hidden if variable 3 is equal to 90.
+ * 
+ * The text on these choices would not show your conditions, and they would
+ * read 'First choice!', 'Second choice!' and 'Third choice!' respectively.
+ * The whitespaces or text outside of the tags are kept, so if you have a
+ * space separating the dis and hide tags, it may show in your final choice
+ * text.
+ * 
  */
 
 //-----------------------------------------------------------------------------
@@ -45,8 +143,8 @@
 (() => {
     'use strict';
 
-    const od = "<disable>";
-    const cd = "</disable>";
+    const od = "<dis>";
+    const cd = "</dis>";
     const oh = "<hide>";
     const ch = "</hide>";
 
@@ -56,7 +154,7 @@
     Window_ChoiceList.prototype.updatePlacement = function () {
         const _GameMsg_Choices = $gameMessage.choices;
         const originalChoices = $gameMessage.choices();
-        $gameMessage.choices = function () {return previewChoicesState(originalChoices.clone())}
+        $gameMessage.choices = function () { return previewChoicesState(originalChoices.clone()) }
         _Window_UpdatePlacement.call(this);
         $gameMessage.choices = _GameMsg_Choices; // restore choices
     };
@@ -158,34 +256,60 @@
     };
 
     Choice.prototype.parse = function (text) {
+
+        const ops = ['||', '&&', '==', '<=', '>=', '>', '<', '+', '-', '*', '/'];
+
+        let firstExpr = "";
+        let op = "";
+        let secondExpr = "";
+
+        let i = 0;
         text = text.trim().trimEnd();
         if (text === "true") return [true];
         if (text === "false") return [false];
         if (!isNaN(text)) return [Number(text)];
         if (text[0] === '(') {
-            const matchingParId = this.findMatchingParentheses(text);
-            if (matchingParId === text.length - 1) return this.parse(text.slice(1, matchingParId));
+            const matchingParId = this.findMatchingParentheses(text, 0);
+            if (matchingParId === text.length - 1) {
+                return this.parse(text.slice(1, matchingParId));
+            } else {
+                firstExpr = text.slice(1, matchingParId);
+                i = matchingParId + 1;
+            };
         }
-
-        // negation
-        const notRe = /^(?:not|!)\s*(.*)/;
-        const notReRes = notRe.exec(text);
-        if (notReRes) return ["!", new Expr(this.parse(notReRes[1]))];
-
-        // binary operations
-        const re = /(\(.*\)|\d+|(?:\\v|\\V)\[\d\])\s*(<|>|<=|>=|\+|-|\*|\/)\s*(\(.*\)|\d+|(?:\\v|\\V)\[\d\])/;
-        const reRes = re.exec(text);
-        if (reRes) return [reRes[2], new Expr(this.parse(reRes[1])), new Expr(this.parse(reRes[3]))];
-
-        // bool operations
-        const boolRe = /(\(.*\)|true|false)\s*(\|\||&&)\s*(\(.*\)|true|false)/;
-        const boolReRes = boolRe.exec(text);
-        if (boolReRes) return [boolReRes[2], new Expr(this.parse(boolReRes[1])), new Expr(this.parse(boolReRes[3]))];
-
-        // var
-        const varRe = /\\(?:v|V)\[(\d+)]/;
-        const varReRes = varRe.exec(text);
-        if (varReRes) return ["var", new Expr(this.parse(varReRes[1]))];
+        const varRe = /^\\[vV]\[(\d+)\]$/;
+        const varRes = varRe.exec(text);
+        while (i < text.length) {
+            const next = text[i];
+            const nextTwo = text[i + 1] ? (text[i] + text[i + 1]) : null;
+            if (next == '!') {
+                op = '!'
+                firstExpr = text.slice(i + 1).trim().trimEnd();
+                return [op, new Expr(this.parse(firstExpr))]
+            } else if (text.slice(i, i + 3) == 'not') {
+                op = '!'
+                firstExpr = text.slice(i + 3).trim().trimEnd();
+                return [op, new Expr(this.parse(firstExpr))]
+            } else if (ops.includes(nextTwo)) {
+                op = text.slice(i, i + 2);
+                if (!firstExpr) {
+                    firstExpr = text.slice(0, i).trim().trimEnd()
+                };
+                secondExpr = text.slice(i + 2).trim().trimEnd()
+                break;
+            } else if (ops.includes(next)) {
+                op = text[i];
+                if (!firstExpr) {
+                    firstExpr = text.slice(0, i).trim().trimEnd()
+                }
+                secondExpr = text.slice(i + 1).trim().trimEnd()
+                break;
+            } else if (varRes) {
+                return ["var", new Expr(this.parse(varRes[1]))];
+            }
+            i++;
+        }
+        return [op, new Expr(this.parse(firstExpr)), new Expr(this.parse(secondExpr))];
     }
 
     Choice.prototype.interpAll = function () {
@@ -203,6 +327,7 @@
         if (expr.operand === "<") return this.interp(expr.arg1) < this.interp(expr.arg2);
         if (expr.operand === ">=") return this.interp(expr.arg1) >= this.interp(expr.arg2);
         if (expr.operand === "<=") return this.interp(expr.arg1) <= this.interp(expr.arg2);
+        if (expr.operand === "==") return this.interp(expr.arg1) == this.interp(expr.arg2);
         if (expr.operand === "+") return this.interp(expr.arg1) + this.interp(expr.arg2);
         if (expr.operand === "-") return this.interp(expr.arg1) - this.interp(expr.arg2);
         if (expr.operand === "*") return this.interp(expr.arg1) * this.interp(expr.arg2);
@@ -216,10 +341,14 @@
         this.interpAll();
     };
 
-    Choice.prototype.findMatchingParentheses = function (str) {
+    Choice.prototype.findMatchingParentheses = function (str, start) {
         let count = 1;
-        let i = 1;
+        let i = start + 1;
         while (count > 0) {
+            if (i >= str.length) {
+                console.error("Matching parentheses not found.");
+                break;
+            }
             if (str[i] === '(') count++;
             if (str[i] === ')') count--;
             i++;
@@ -256,7 +385,7 @@
     console.log("Test 0");
     const parenthStr = "(())()";
     const choiceInst = new Choice(parenthStr);
-    const res = choiceInst.findMatchingParentheses(parenthStr);
+    const res = choiceInst.findMatchingParentheses(parenthStr, 0);
     console.assert(res === 3, "%o", [res, 3]);
 
     console.log("Test 1");
@@ -415,4 +544,14 @@
     console.assert(hideDisChoice.text === hideDisTest, "%o", [hideDisChoice.text, hideDisTest]);
     hideDisChoice.run();
     console.assert(hideDisChoice.text === "testchoice", "%o", [hideDisChoice.text, "testchoice"]);
+
+    console.log("Test 13");
+    const equalsTest = `${od}5 == 6${cd} choice`;
+    const equalsChoice = new Choice(equalsTest);
+    console.assert(equalsChoice.text === equalsTest, "%o", [equalsChoice.text, equalsTest]);
+    equalsChoice.run();
+    console.assert(equalsChoice.text === " choice", "%o", [equalsChoice.text, " choice"]);
+    const equalsExpr = new Expr(["==", new Expr([5]), new Expr([6])]);
+    console.assert(equalsChoice.disableExpr.equals(equalsExpr), "%o", [equalsChoice.disableExpr, equalsExpr]);
+    console.assert(equalsChoice.disabled === false, "%o", [equalsChoice.disableExpr, equalsExpr]);
 })();
