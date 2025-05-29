@@ -24,7 +24,7 @@
  * If the conditions inside the tags result in a 'true' value, then the
  * choice is disabled or hidden, depending on the tags used.
  * 
- * 
+ *
  * If you use several operations inside one set of tags make sure to
  * place parentheses around each different operation!<br>
  * This is exemplified below.
@@ -207,6 +207,21 @@
         return lst;
     }
 
+    function findMatchingParentheses(str, start) {
+        let count = 1;
+        let i = start + 1;
+        while (count > 0) {
+            if (i >= str.length) {
+                console.error("Matching parentheses not found.");
+                return str.length;
+            }
+            if (str[i] === '(') count++;
+            if (str[i] === ')') count--;
+            i++;
+        }
+        return i - 1;
+    }
+
     // Set transparency of disabled choices
     let _Window_DrawItem = Window_ChoiceList.prototype.drawItem;
     Window_ChoiceList.prototype.drawItem = function (index) {
@@ -263,60 +278,71 @@
     };
 
     Choice.prototype.parse = function (text) {
-
-        const ops = ['||', '&&', '==', '<=', '>=', '>', '<', '+', '-', '*', '/'];
-
-        let firstExpr = "";
-        let op = "";
-        let secondExpr = "";
-
-        let i = 0;
-        text = text.trim().trimEnd();
+        text = text.replace("not", "!").trim().trimEnd();
         if (text === "true") return [true];
         if (text === "false") return [false];
         if (!isNaN(text)) return [Number(text)];
         if (text[0] === '(') {
-            const matchingParId = this.findMatchingParentheses(text, 0);
+            const matchingParId = findMatchingParentheses(text, 0);
             if (matchingParId === text.length - 1) {
                 return this.parse(text.slice(1, matchingParId));
-            } else {
-                firstExpr = text.slice(1, matchingParId);
-                i = matchingParId + 1;
-            };
+            }
         }
+
+        const nextOpId = lowestPrecedence(text);
+
+        if (nextOpId) { // found an operation
+            const op = text.slice(nextOpId[0], nextOpId[0] + nextOpId[1]);
+            if (op === '!') {
+                const firstExpr = text.slice(nextOpId[0] + nextOpId[1]).trim().trimEnd();
+                return [op, new Expr(this.parse(firstExpr))];
+            } else {
+                const firstExpr = text.slice(0, nextOpId[0]).trim().trimEnd();
+                const secondExpr = text.slice(nextOpId[0] + nextOpId[1]).trim().trimEnd();
+                return [op, new Expr(this.parse(firstExpr)), new Expr(this.parse(secondExpr))];
+            }
+        }
+
+        // else, it's a variable access
         const varRe = /^\\[vV]\[(\d+)\]$/;
         const varRes = varRe.exec(text);
-        while (i < text.length) {
-            const next = text[i];
-            const nextTwo = text[i + 1] ? (text[i] + text[i + 1]) : null;
-            if (next == '!') {
-                op = '!'
-                firstExpr = text.slice(i + 1).trim().trimEnd();
-                return [op, new Expr(this.parse(firstExpr))]
-            } else if (text.slice(i, i + 3) == 'not') {
-                op = '!'
-                firstExpr = text.slice(i + 3).trim().trimEnd();
-                return [op, new Expr(this.parse(firstExpr))]
-            } else if (ops.includes(nextTwo)) {
-                op = text.slice(i, i + 2);
-                if (!firstExpr) {
-                    firstExpr = text.slice(0, i).trim().trimEnd()
-                };
-                secondExpr = text.slice(i + 2).trim().trimEnd()
-                break;
-            } else if (ops.includes(next)) {
-                op = text[i];
-                if (!firstExpr) {
-                    firstExpr = text.slice(0, i).trim().trimEnd()
+        if (varRes) {
+            return ["var", new Expr(this.parse(varRes[1]))];
+        }
+
+        console.error("Unknown operation detected in: ", text);
+        return;
+    }
+
+    // return an next in line for lowest precedence operation and length of operation
+    function lowestPrecedence(string) {
+        const precedence = { "!": 14, "**": 13, "*": 12, "/": 12, "%": 12, "+": 11, "-": 11, "<": 9, ">": 9, ">=": 9, "<=": 9, "!=": 8, "==": 8, "&&": 4, "||": 3 };
+        let op = [];
+        let i = 0;
+        while (i < string.length) {
+            const next = string[i];
+            const nextTwo = string[i + 1] ? (string[i] + string[i + 1]) : null;
+            if (next == '(') {
+                // skip parentheses
+                i = findMatchingParentheses(string, i) + 1;
+                continue;
+            }
+            if (Object.keys(precedence).includes(nextTwo)) {
+                if (op.length === 0 ||
+                    precedence[nextTwo] < precedence[string.slice(op[0], op[0] + op[1])] ||
+                    (precedence[nextTwo] === precedence[string.slice(op[0], op[0] + op[1])] && precedence[nextTwo] !== "**")) {
+                    op = [i, 2];
                 }
-                secondExpr = text.slice(i + 1).trim().trimEnd()
-                break;
-            } else if (varRes) {
-                return ["var", new Expr(this.parse(varRes[1]))];
+                i++;
+            } else if (Object.keys(precedence).includes(next)) {
+                if (op.length === 0 ||
+                    precedence[next] <= precedence[string.slice(op[0], op[0] + op[1])]) {
+                    op = [i, 1];
+                }
             }
             i++;
         }
-        return [op, new Expr(this.parse(firstExpr)), new Expr(this.parse(secondExpr))];
+        return op;
     }
 
     Choice.prototype.interpAll = function () {
@@ -334,10 +360,12 @@
         if (expr.operand === "<") return this.interp(expr.arg1) < this.interp(expr.arg2);
         if (expr.operand === ">=") return this.interp(expr.arg1) >= this.interp(expr.arg2);
         if (expr.operand === "<=") return this.interp(expr.arg1) <= this.interp(expr.arg2);
-        if (expr.operand === "==") return this.interp(expr.arg1) == this.interp(expr.arg2);
+        if (expr.operand === "==") return this.interp(expr.arg1) === this.interp(expr.arg2);
+        if (expr.operand === "!=") return this.interp(expr.arg1) !== this.interp(expr.arg2);
         if (expr.operand === "+") return this.interp(expr.arg1) + this.interp(expr.arg2);
         if (expr.operand === "-") return this.interp(expr.arg1) - this.interp(expr.arg2);
         if (expr.operand === "*") return this.interp(expr.arg1) * this.interp(expr.arg2);
+        if (expr.operand === "**") return this.interp(expr.arg1) ** this.interp(expr.arg2);
         if (expr.operand === "/") return this.interp(expr.arg1) / this.interp(expr.arg2);
         if (expr.operand === "||") return this.interp(expr.arg1) || this.interp(expr.arg2);
         if (expr.operand === "&&") return this.interp(expr.arg1) && this.interp(expr.arg2);
@@ -348,27 +376,12 @@
         this.interpAll();
     };
 
-    Choice.prototype.findMatchingParentheses = function (str, start) {
-        let count = 1;
-        let i = start + 1;
-        while (count > 0) {
-            if (i >= str.length) {
-                console.error("Matching parentheses not found.");
-                break;
-            }
-            if (str[i] === '(') count++;
-            if (str[i] === ')') count--;
-            i++;
-        }
-        return i - 1;
-    }
-
     // bool - -
     // num - -
     // var Expr -
     // ! Expr -
     // <>= Expr Expr
-    // +-*/ Expr Expr
+    // **+-*/ Expr Expr
     // &&|| Expr Expr
     function Expr() {
         this.initialize(...arguments);
