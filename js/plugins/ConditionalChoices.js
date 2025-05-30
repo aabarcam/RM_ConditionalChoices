@@ -24,11 +24,6 @@
  * If the conditions inside the tags result in a 'true' value, then the
  * choice is disabled or hidden, depending on the tags used.
  * 
- *
- * If you use several operations inside one set of tags make sure to
- * place parentheses around each different operation!<br>
- * This is exemplified below.
- * 
  * You may use both disable and hide conditions on the same choice.
  * 
  * Only a maximum of one disable and one hide conditions is allowed per
@@ -122,7 +117,8 @@
  * 
  * Parentheses
  * 
- * Make sure to separate the different operations using parentheses!
+ * Use parentheses to dictate the order of the operations, otherwise execution 
+ * will followJavaScript's operation precedence.
  * 
  * Examples
  * Choices
