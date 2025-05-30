@@ -326,7 +326,7 @@
             if (Object.keys(precedence).includes(nextTwo)) {
                 if (op.length === 0 ||
                     precedence[nextTwo] < precedence[string.slice(op[0], op[0] + op[1])] ||
-                    (precedence[nextTwo] === precedence[string.slice(op[0], op[0] + op[1])] && precedence[nextTwo] !== "**")) {
+                    (precedence[nextTwo] === precedence[string.slice(op[0], op[0] + op[1])] && nextTwo !== "**")) {
                     op = [i, 2];
                 }
                 i++;
@@ -599,7 +599,7 @@
     console.assert(expChoice.disabled === true, "%o", [expChoice.disabled, true]);
 
     console.log("Test Expo");
-    const remTest = `${od}0 != 5 % 2${cd} choice`;
+    const remTest = `${od}0 != 5 % 2${cd}${oh}512==2**3**2${ch} choice`;
     const remChoice = new Choice(remTest);
     console.assert(remChoice.text === remTest, "%o", [remChoice.text, remTest]);
     remChoice.run();
@@ -607,4 +607,8 @@
     const remExpr = new Expr(["!=", new Expr([0]), new Expr(["%", new Expr([5]), new Expr([2])])]);
     console.assert(remChoice.disableExpr.equals(remExpr), "%o", [remChoice.disableExpr, remExpr]);
     console.assert(remChoice.disabled === true, "%o", [remChoice.disabled, true]);
+
+    const remExprHide = new Expr(["==", new Expr([512]), new Expr(["**", new Expr([2]), new Expr(["**", new Expr([3]), new Expr([2])])])]);
+    console.assert(remChoice.hideExpr.equals(remExprHide), "%o", [remChoice.hideExpr, remExprHide]);
+    console.assert(remChoice.hidden === true, "%o", [remChoice.hidden, true]);
 })();

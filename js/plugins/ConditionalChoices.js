@@ -326,7 +326,7 @@
             if (Object.keys(precedence).includes(nextTwo)) {
                 if (op.length === 0 ||
                     precedence[nextTwo] < precedence[string.slice(op[0], op[0] + op[1])] ||
-                    (precedence[nextTwo] === precedence[string.slice(op[0], op[0] + op[1])] && precedence[nextTwo] !== "**")) {
+                    (precedence[nextTwo] === precedence[string.slice(op[0], op[0] + op[1])] && nextTwo !== "**")) {
                     op = [i, 2];
                 }
                 i++;
