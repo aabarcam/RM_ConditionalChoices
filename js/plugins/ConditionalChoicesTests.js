@@ -287,7 +287,7 @@
 
         const nextOpId = lowestPrecedence(text);
 
-        if (nextOpId) { // found an operation
+        if (nextOpId.length !== 0) { // found an operation
             const op = text.slice(nextOpId[0], nextOpId[0] + nextOpId[1]);
             if (op === '!') {
                 const firstExpr = text.slice(nextOpId[0] + nextOpId[1]).trim().trimEnd();
